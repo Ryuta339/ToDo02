@@ -12,12 +12,13 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, reactive, watchEffect, onMounted } from 'vue'
+import { toRefs, defineComponent, reactive, watchEffect, onMounted } from 'vue'
 import TodoList from '@/components/TodoList.vue'
 import AddTodo from '@/components/AddTodo.vue'
 import { fetchTodo } from '@/api'
 import { Todo } from '@/types/todo'
 import { v4 as uuid } from 'uuid'
+import useSortTodo from '@/composables/use-sort-todo'
 
 interface State {
   todos: Todo[];
@@ -33,15 +34,12 @@ export default defineComponent({
       todos: []
     })
 
+    const { todos } = toRefs(state)
+    const { sortTodo } = useSortTodo(todos)
+
     onMounted(async () => {
       state.todos = await fetchTodo()
     })
-
-    // Unexpected side effect in computed property
-    // を避けるためにslice()を入れている
-    const sortTodo = computed(() => state.todos.slice().sort((a, b) => {
-      return b.createdAt.getTime() - a.createdAt.getTime()
-    }))
 
     const addTodo = (title: string) => {
       state.todos = [...state.todos, {
